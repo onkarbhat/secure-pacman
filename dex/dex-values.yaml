@@ -1,0 +1,45 @@
+config:
+  connectors:
+  - config:
+      bindDN: cn=admin,dc=example,dc=org
+      bindPW: <Enter the bind password here>
+      groupSearch:
+        baseDN: dc=example,dc=org
+        filter: (objectClass=groupOfNames)
+        nameAttr: cn
+        userMatchers:
+        - groupAttr: member
+          userAttr: DN
+      host: 34.105.18.42:1389
+      insecureNoSSL: true
+      insecureSkipVerify: true
+      startTLS: false
+      userSearch:
+        baseDN: ou=users,dc=example,dc=org
+        emailAttr: uid
+        filter: (objectClass=inetOrgPerson)
+        idAttr: uid
+        nameAttr: uid
+        preferredUsernameAttr: uid
+        username: uid
+    id: ldap
+    name: LDAP
+    type: ldap
+  issuer: http://onkar-dex.dev.gke.kasten.io:5556/dex
+  logger:
+    format: text
+    level: info
+  oauth2:
+    skipApprovalScreen: true
+  staticClients:
+  - id: kasten
+    name: K10
+    redirectURIs:
+    - http://onkar-oauth2-proxy.dev.gke.kasten.io:4180/oauth2/callback
+    secret: kastensecret
+  storage:
+    type: memory
+  web:
+    http: 0.0.0.0:8080
+service:
+  type: LoadBalancer
