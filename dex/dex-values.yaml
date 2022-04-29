@@ -10,7 +10,7 @@ config:
         userMatchers:
         - groupAttr: member
           userAttr: DN
-      host: 34.105.18.42:1389
+      host: <Host name or IP address of the LDAP server>:1389
       insecureNoSSL: true
       insecureSkipVerify: true
       startTLS: false
@@ -31,15 +31,15 @@ config:
     level: info
   oauth2:
     skipApprovalScreen: true
+  storage:
+    type: memory
+  web:
+    http: 0.0.0.0:8080
   staticClients:
   - id: kasten
     name: K10
     redirectURIs:
     - http://onkar-oauth2-proxy.dev.gke.kasten.io:4180/oauth2/callback
     secret: kastensecret
-  storage:
-    type: memory
-  web:
-    http: 0.0.0.0:8080
 service:
   type: LoadBalancer
