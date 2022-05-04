@@ -10,7 +10,7 @@ config:
         userMatchers:
         - groupAttr: member
           userAttr: DN
-      host: <Host name or IP address of the LDAP server>:1389
+      host: openldap.openldap:1389
       insecureNoSSL: true
       insecureSkipVerify: true
       startTLS: false
@@ -25,7 +25,7 @@ config:
     id: ldap
     name: LDAP
     type: ldap
-  issuer: http://onkar-dex.dev.gke.kasten.io:5556/dex
+  issuer: http://dex.dex:5556/dex
   logger:
     format: text
     level: info
@@ -39,7 +39,5 @@ config:
   - id: kasten
     name: K10
     redirectURIs:
-    - http://onkar-oauth2-proxy.dev.gke.kasten.io:4180/oauth2/callback
+    - http://oauth2-proxy.pacman:4180/oauth2/callback
     secret: kastensecret
-service:
-  type: LoadBalancer
