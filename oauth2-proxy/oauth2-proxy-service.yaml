@@ -6,7 +6,7 @@ metadata:
   name: oauth2-proxy
   namespace: pacman
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - name: http
     port: 4180
