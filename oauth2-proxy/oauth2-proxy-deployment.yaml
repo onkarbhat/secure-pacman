@@ -18,8 +18,8 @@ spec:
       containers:
       - args:
         - --provider=oidc
-        - --redirect-url=http://onkar-oauth2-proxy.dev.gke.kasten.io:4180/oauth2/callback
-        - --oidc-issuer-url=http://onkar-dex.dev.gke.kasten.io:5556/dex
+        - --redirect-url=http://oauth2-proxy.pacman:4180/oauth2/callback
+        - --oidc-issuer-url=http://dex.dex:5556/dex
         - --cookie-secure=false
         - --email-domain=*
         - --upstream=http://pacman-actual.pacman:8080
