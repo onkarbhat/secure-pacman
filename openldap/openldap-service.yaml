@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: openldap
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - name: tcp-ldap
       port: 1389
