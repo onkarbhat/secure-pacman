@@ -5,7 +5,7 @@ metadata:
   labels:
     name: pacman
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 8080
       targetPort: 8080
