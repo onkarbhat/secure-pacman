@@ -1,5 +1,5 @@
 dn: cn=pacmanAdmins,ou=users,dc=example,dc=org
 cn: pacmanAdmins
 objectClass: groupOfNames
-member: cn=productionadmin@kasten.io,ou=users,dc=example,dc=org
-member: cn=productionbasic@kasten.io,ou=users,dc=example,dc=org
+member: cn=productionadmin,ou=users,dc=example,dc=org
+member: cn=productionbasic,ou=users,dc=example,dc=org
