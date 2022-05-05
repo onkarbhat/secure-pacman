@@ -20,6 +20,7 @@ spec:
         - --provider=oidc
         - --redirect-url=http://oauth2-proxy.pacman:4180/oauth2/callback
         - --oidc-issuer-url=http://dex.dex:5556/dex
+        - --scope=openid groups profile email
         - --cookie-secure=false
         - --email-domain=*
         - --upstream=http://pacman-actual.pacman:8080
