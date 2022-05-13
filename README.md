@@ -1,61 +1,86 @@
-# secure-pacman
+# secure-pacman #
 Secure access to the arcade game Pac-Man using Oauth2-proxy, Dex and an OpenLDAP server.
-
-# Prerequisites
-## Docker and Helm
+----
+# Prerequisites #
+## Docker and Helm ##
 
 * Docker - https://docs.docker.com/get-docker/​
 
 * Helm - https://helm.sh/docs/intro/install/
 
-## Kind
-### Install
+## Kind ##
+### Installation
 
 Kind - https://kind.sigs.k8s.io/​
 
-Macbook: `brew install kind`
+* Macbook:
+```
+brew install kind
+```
 
 If you have “go 1.17+” installed​
-
-`go install sigs.k8s.io/kind@v0.12.0​`
+```
+go install sigs.k8s.io/kind@v0.12.0​
+```
 
 For older versions of go​
-
-`GO111MODULE="on" go get sigs.k8s.io/kind@v0.12.0` ​
+```
+GO111MODULE="on" go get sigs.k8s.io/kind@v0.12.0
+```
 
 Locate the kind command​
-
-`ls $(go env GOPATH)/bin/kind​`
+```
+ls $(go env GOPATH)/bin/kind​
+```
 
 https://go.dev/dl/​
 
 https://kind.sigs.k8s.io/#installation-and-usage
+
 ### Create up a Kind cluster
-
-`kind create cluster --name <Name of the cluster>`
+```
+kind create cluster --name <Name of the cluster>
+```
 ## OpenLDAP - ldap Utils​
-Macbook:​
-`brew install openldap​`
-
- Debian/Ubuntu:​
-`apt-get install ldap-utils`
-# Tutorials
-## OpenLDAP service
+* Macbook:​
+```
+brew install openldap​
+```
+* Debian/Ubuntu:​
+```
+apt-get install ldap-utils
+```
+----
+# Tutorials #
+## OpenLDAP service ##
 ### Create Namespace and Secret​
-`kubectl create ns openldap​`
-`kubectl create secret generic openldap --from-literal=adminpassword=adminpassword --from-literal=users=productionadmin,productionbasic,productionconfig --from-literal=passwords=testpasswordadmin,testpasswordbasic,testpasswordconfig -n openldap`
+```
+kubectl create ns openldap​
+kubectl create secret generic openldap --from-literal=adminpassword=adminpassword --from-literal=users=productionadmin,productionbasic,productionconfig --from-literal=passwords=testpasswordadmin,testpasswordbasic,testpasswordconfig -n openldap
+```
 ### Create Deployment​
-`cd openldap​`
-`kubectl create -n openldap -f openldap-deployment.yaml​`
+```
+cd openldap​
+kubectl create -n openldap -f openldap-deployment.yaml​
+```
 ### Create Service
-`kubectl create -n openldap -f openldap-service.yaml​`
+```
+kubectl create -n openldap -f openldap-service.yaml​
+```
 ### Port-forward
-`kubectl port-forward service/openldap -n openldap 1389:1389`​
+```
+kubectl port-forward service/openldap -n openldap 1389:1389
+```
 ### Add a Group​
-`ldapadd -x -H ldap://127.0.0.1:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -f pacman-admin-group.ldif`
+```
+ldapadd -x -H ldap://127.0.0.1:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -f pacman-admin-group.ldif
+```
 ### OpenLDAP - Search
-`ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword​`
-## Dex
+```
+ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword​
+```
+
+## Dex ##
 ### Install via Helm
 ```
 kubectl create ns dex​
@@ -63,16 +88,23 @@ helm repo add dex https://charts.dexidp.io​
 helm repo update​
 ```
 Update `bindPW` in dex-values.yaml
-`helm install dex dex/dex -n dex -f dex-values.yaml`
+```
+helm install dex dex/dex -n dex -f dex-values.yaml
+```
 
 Verify installation
-`helm status dex -n dex`
+```
+helm status dex -n dex
+```
 
 ### Update network
-`kubectl port-forward service/dex -n dex 5556:5556`
-`sudo vi /etc/hosts`
+```
+kubectl port-forward service/dex -n dex 5556:5556
+sudo vi /etc/hosts
+```
 Add `127.0.0.1 dex.dex`
-## OAuth2 Proxy
+
+## OAuth2 Proxy ##
 ### Create Deployment and Service
 ```
 cd oauth2-proxy
