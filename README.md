@@ -1,6 +1,6 @@
 # secure-pacman #
-Secure access to the arcade game Pac-Man using Oauth2-proxy, Dex and an OpenLDAP server.
-----
+Tutorial showing how to secure access to the arcade game Pac-Man using Oauth2-proxy, Dex and an OpenLDAP server.
+
 # Prerequisites #
 ## Docker and Helm ##
 
@@ -52,7 +52,7 @@ apt-get install ldap-utils
 ```
 ----
 # Tutorials #
-## OpenLDAP service ##
+## 1) OpenLDAP service ##
 ### Create Namespace and Secret​
 ```
 kubectl create ns openldap​
@@ -80,7 +80,7 @@ ldapadd -x -H ldap://127.0.0.1:1389 -D "cn=admin,dc=example,dc=org" -w adminpass
 ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword​
 ```
 
-## Dex ##
+## 2) Dex ##
 ### Install via Helm
 ```
 kubectl create ns dex​
@@ -104,18 +104,18 @@ sudo vi /etc/hosts
 ```
 Add `127.0.0.1 dex.dex`
 
-## OAuth2 Proxy ##
-### Create Deployment and Service
+## 3) OAuth2 Proxy ##
+Create Deployment and Service
 ```
 cd oauth2-proxy
 kubectl create ns pacman
 kubectl create -f oauth2-proxy-deployment.yaml -n pacman
 kubectl create -f oauth2-proxy-service.yaml -n pacman
 ```
-### Update network
+Update network
 `sudo vi /etc/hosts`
 Add `127.0.0.1 oauth2-proxy.pacman`
-## Pac-man
+## 4) Pac-man ##
 ### Install via Helm
 ```
 helm repo add pacman https://shuguet.github.io/pacman/
