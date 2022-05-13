@@ -1,5 +1,5 @@
-# secure-pacman #
-Tutorial showing how to secure access to the arcade game Pac-Man using Oauth2-proxy, Dex and an OpenLDAP server.
+# Overview #
+This tutorial shows how to secure access to the arcade game Pac-Man using Oauth2-proxy, Dex and an OpenLDAP server.
 
 # Prerequisites #
 ## Docker and Helm ##
@@ -52,41 +52,47 @@ apt-get install ldap-utils
 ```
 ----
 # Tutorials #
-## 1) OpenLDAP service ##
-### Create Namespace and Secret​
+## OpenLDAP service ##
+Create Namespace and Secret​
 ```
 kubectl create ns openldap​
 kubectl create secret generic openldap --from-literal=adminpassword=adminpassword --from-literal=users=productionadmin,productionbasic,productionconfig --from-literal=passwords=testpasswordadmin,testpasswordbasic,testpasswordconfig -n openldap
 ```
-### Create Deployment​
+
+Create Deployment​
 ```
 cd openldap​
 kubectl create -n openldap -f openldap-deployment.yaml​
 ```
-### Create Service
+
+Create Service
 ```
 kubectl create -n openldap -f openldap-service.yaml​
 ```
-### Port-forward
+
+Port-forward
 ```
 kubectl port-forward service/openldap -n openldap 1389:1389
 ```
-### Add a Group​
+
+Add a Group​
 ```
 ldapadd -x -H ldap://127.0.0.1:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -f pacman-admin-group.ldif
 ```
-### OpenLDAP - Search
+
+OpenLDAP - Search
 ```
 ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword​
 ```
 
-## 2) Dex ##
-### Install via Helm
+## Dex ##
+Install via Helm
 ```
 kubectl create ns dex​
 helm repo add dex https://charts.dexidp.io​
 helm repo update​
 ```
+
 Update `bindPW` in dex-values.yaml
 ```
 helm install dex dex/dex -n dex -f dex-values.yaml
@@ -97,14 +103,17 @@ Verify installation
 helm status dex -n dex
 ```
 
-### Update network
+Update network
 ```
 kubectl port-forward service/dex -n dex 5556:5556
 sudo vi /etc/hosts
 ```
-Add `127.0.0.1 dex.dex`
+Add
+```
+127.0.0.1 dex.dex
+```
 
-## 3) OAuth2 Proxy ##
+## OAuth2 Proxy ##
 Create Deployment and Service
 ```
 cd oauth2-proxy
@@ -113,10 +122,16 @@ kubectl create -f oauth2-proxy-deployment.yaml -n pacman
 kubectl create -f oauth2-proxy-service.yaml -n pacman
 ```
 Update network
-`sudo vi /etc/hosts`
-Add `127.0.0.1 oauth2-proxy.pacman`
-## 4) Pac-man ##
-### Install via Helm
+```
+sudo vi /etc/hosts
+```
+Add
+```
+127.0.0.1 oauth2-proxy.pacman
+```
+
+## Pac-man ##
+Install via Helm
 ```
 helm repo add pacman https://shuguet.github.io/pacman/
 helm repo update
@@ -128,18 +143,23 @@ Verify installation
 helm status pacman -n pacman
 watch kubectl get pod -n pacman
 ```
-### Update pacman service
+
+Update pacman service
 ```
 kubectl patch svc pacman -n pacman --type='json' -p='[{"op": "replace", "path": "/spec/ports/0/targetPort", "value":4180}]'
 kubectl patch svc pacman -n pacman --patch '{"spec": {"selector": {"k8s-app": "oauth2-proxy"}}}'
 ```
-### Deploy pacman actual service
+
+Deploy pacman actual service
 ```
 cd pacman
 kubectl create –f pacman-actual-service.yaml -n pacman
 ```
-### Port-forward
-`kubectl port-forward service/pacman -n pacman 8080:80`
+
+Port-forward
+```
+kubectl port-forward service/pacman -n pacman 8080:80
+```
 
 
 
