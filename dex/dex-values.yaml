@@ -37,7 +37,7 @@ config:
     http: 0.0.0.0:8080
   staticClients:
   - id: kasten
-    name: K10
+    name: OAuth2Proxy
     redirectURIs:
     - http://oauth2-proxy.pacman:4180/oauth2/callback
     secret: kastensecret
