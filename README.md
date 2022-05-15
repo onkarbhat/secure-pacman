@@ -1,166 +1,212 @@
 # Overview #
-This tutorial shows how to secure access to the arcade game Pac-Man using Oauth2-proxy, Dex and an OpenLDAP server.
+This tutorial shows how to secure access to the arcade game Pac-Man using Oauth2-proxy, Dex and an OpenLDAP server - without requiring code changes to the Pac-Man app itself.
 
 # Prerequisites #
-## Docker and Helm ##
 
-* Docker - https://docs.docker.com/get-docker/​
+In order to complete this tutorial, you will need an environment with the following prerequisites. 
 
-* Helm - https://helm.sh/docs/intro/install/
+* [(macOS Only) Homebrew](#homebrew) - Package manager used to install prereqs
+* [(Windows Only) Chocolatey](#chocolatey) - Package manager used to install prereqs
+* [git](#git) - Used to clone the Pac-Man application
+* [docker](#docker) - Container runtime
+* [kind](#kind) - Running a local Kubernetes cluster using Docker container “nodes”
+* [kubectl](#kubectl) - Kubernetes command-line tool
+* [helm](#helm) - Kubernetes package manager
+* [openldap](#openldap) - Used to populate OpenLDAP instance with user/group data
 
-## Kind ##
-### Installation
 
-Kind - https://kind.sigs.k8s.io/​
+## Homebrew
 
-* Macbook:
-```
-brew install kind
-```
+Run the following in your Terminal to install ```brew``` (from [brew.sh](https://brew.sh)):
 
-If you have “go 1.17+” installed​
-```
-go install sigs.k8s.io/kind@v0.12.0​
-```
+```/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"```
 
-For older versions of go​
-```
-GO111MODULE="on" go get sigs.k8s.io/kind@v0.12.0
-```
+## Chocolatey
 
-Locate the kind command​
-```
-ls $(go env GOPATH)/bin/kind​
-```
+Follow the linked instructions from [chocolatey.org](https://chocolatey.org/install#individual) to install ```choco```.
+## git
 
-https://go.dev/dl/​
+* macOS: ```brew install git```
+* Windows: ```choco install git```
+* Linux: [Distro-specific instructions](https://git-scm.com/download/linux)
 
-https://kind.sigs.k8s.io/#installation-and-usage
+Alternatively, you can install [GitHub Desktop](https://desktop.github.com/).
 
-### Create up a Kind cluster
-```
-kind create cluster --name <Name of the cluster>
-```
-## OpenLDAP - ldap Utils​
-* Macbook:​
-```
-brew install openldap​
-```
-* Debian/Ubuntu:​
-```
-apt-get install ldap-utils
-```
-----
-# Tutorials #
-## OpenLDAP service ##
-Create Namespace and Secret​
-```
-kubectl create ns openldap​
-kubectl create secret generic openldap --from-literal=adminpassword=adminpassword --from-literal=users=productionadmin,productionbasic,productionconfig --from-literal=passwords=testpasswordadmin,testpasswordbasic,testpasswordconfig -n openldap
-```
+## docker
 
-Create Deployment​
-```
-cd openldap​
-kubectl create -n openldap -f openldap-deployment.yaml​
-```
+* macOS: ```brew install docker```
+* Windows: ```choco install docker-desktop```
+* Linux: [Distro-specifc instructions](https://docs.docker.com/engine/install/)
 
-Create Service
-```
-kubectl create -n openldap -f openldap-service.yaml​
-```
+Alternatively, you can install [Docker Desktop](https://www.docker.com/get-started/).
 
-Port-forward
-```
-kubectl port-forward service/openldap -n openldap 1389:1389
-```
+## kind
 
-Add a Group​
-```
-ldapadd -x -H ldap://127.0.0.1:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -f pacman-admin-group.ldif
-```
+* macOS: ```brew install kind```
+* Windows: ```choco install kind```
+* Linux (from [kind.sigs.k8s.io](https://kind.sigs.k8s.io/#installation-and-usage)): 
+  ```
+  curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.13.0/kind-linux-amd64
+  chmod +x ./kind
+  mv ./kind /some-dir-in-your-$PATH/kind
+  ```
 
-OpenLDAP - Search
-```
-ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword​
-```
+## kubectl
 
-## Dex ##
-Install via Helm
-```
-kubectl create ns dex​
-helm repo add dex https://charts.dexidp.io​
-helm repo update​
-```
+* macOS: ```brew install kubectl```
+* Windows: ```choco install kubernetes-cli```
+* Linux: [Distro-specific instructions](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 
-Update `bindPW` in dex-values.yaml
-```
-helm install dex dex/dex -n dex -f dex-values.yaml
-```
+## helm
 
-Verify installation
-```
-helm status dex -n dex
-```
+* macOS: ```brew install helm```
+* Windows: ```choco install kubernetes-helm```
+* Linux: [Distro-specific instructions](https://helm.sh/docs/intro/install/)
 
-Update network
-```
-kubectl port-forward service/dex -n dex 5556:5556
-sudo vi /etc/hosts
-```
-Add
-```
-127.0.0.1 dex.dex
-```
+## openldap
 
-## OAuth2 Proxy ##
-Create Deployment and Service
-```
-cd oauth2-proxy
-kubectl create ns pacman
-kubectl create -f oauth2-proxy-deployment.yaml -n pacman
-kubectl create -f oauth2-proxy-service.yaml -n pacman
-```
-Update network
-```
-sudo vi /etc/hosts
-```
-Add
-```
-127.0.0.1 oauth2-proxy.pacman
-```
+* macOS: ```brew install openldap```
+* Windows: ```choco install openldap```
+* Debian/Ubuntu: ```apt-get install ldap-utils```
+* RedHat/CentOS: ```yum -y install openldap```
 
-## Pac-man ##
-Install via Helm
-```
-helm repo add pacman https://shuguet.github.io/pacman/
-helm repo update
-helm install pacman pacman/pacman -n pacman
-```
+# Tutorial
+The following steps correspond to the live tutorial walkthrough, which will provide great insight into the individual steps.
+## Environment Setup
+1. Create your Kind K8s cluster
+    ```
+    kind create cluster --name <Name of the cluster>
+    ```
+1. Verify `kubectl` context matches your new Kind cluster (i.e., **kind-\<Name of the cluster>**)
+   ```
+   kubectl config current-context
+   ```
+1. Clone repository
+   ```
+   git clone https://github.com/onkarbhat/secure-pacman.git
+   ```
+## OpenLDAP
 
-Verify installation
-```
-helm status pacman -n pacman
-watch kubectl get pod -n pacman
-```
+1. Create Namespace and Secret​
+    ```
+    kubectl create ns openldap​
+    kubectl create secret generic openldap --from-literal=adminpassword=adminpassword --from-literal=users=productionadmin,productionbasic,productionconfig --from-literal=passwords=testpasswordadmin,testpasswordbasic,testpasswordconfig -n openldap
+    ```
 
-Update pacman service
-```
-kubectl patch svc pacman -n pacman --type='json' -p='[{"op": "replace", "path": "/spec/ports/0/targetPort", "value":4180}]'
-kubectl patch svc pacman -n pacman --patch '{"spec": {"selector": {"k8s-app": "oauth2-proxy"}}}'
-```
+1. Create Deployment​
+    ```
+    cd openldap​
+    kubectl create -n openldap -f openldap-deployment.yaml​
+    ```
 
-Deploy pacman actual service
-```
-cd pacman
-kubectl create –f pacman-actual-service.yaml -n pacman
-```
+1. Create Service
+    ```
+    kubectl create -n openldap -f openldap-service.yaml​
+    ```
 
-Port-forward
-```
-kubectl port-forward service/pacman -n pacman 8080:80
-```
+1. (In a separate terminal) Initiate *service/openldap* port-forward
+    ```
+    kubectl port-forward service/openldap -n openldap 1389:1389
+    ```
 
+1. Add a Group​
+    ```
+    ldapadd -x -H ldap://127.0.0.1:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -f pacman-admin-group.ldif
+    ```
+
+1. Verify LDIF Import
+    ```
+    ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword​
+    ```
+
+## Dex
+
+1. Add Dex repo to Helm
+    ```
+    helm repo add dex https://charts.dexidp.io​
+    helm repo update​ dex
+    cd ../dex
+    ```
+
+1. Update `bindPW` in *dex-values.yaml* to match imported admin user
+   
+1. Install Dex via Helm
+    ```
+    kubectl create ns dex​
+    helm install dex dex/dex -n dex -f dex-values.yaml
+    ```
+
+1. Verify installation
+    ```
+    helm status dex -n dex
+    ```
+
+1. Add *dex.dex* entry into *hosts* file:
+
+   * Linux/macOS: `sudo vi /etc/hosts`
+   * Windows: `notepad C:\windows\system32\drivers\etc\hosts`
+
+    Add the following entry, save, and close:
+    ```
+    127.0.0.1 dex.dex
+    ```
+
+1. (In a separate terminal) Initiate *service/dex* port-forward
+    ```
+    kubectl port-forward service/dex -n dex 5556:5556
+    ```
+## OAuth2 Proxy 
+1. Create Deployment and Service
+    ```
+    cd ../oauth2-proxy
+    kubectl create ns pacman
+    kubectl create -f oauth2-proxy-deployment.yaml -n pacman
+    kubectl create -f oauth2-proxy-service.yaml -n pacman
+    ```
+
+1. Add *oauth2-proxy.pacman* entry into *hosts* file:
+
+   * Linux/macOS: `sudo vi /etc/hosts`
+   * Windows: `notepad C:\windows\system32\drivers\etc\hosts`
+
+    Add the following entry, save, and close:
+    ```
+    127.0.0.1 oauth2-proxy.pacman
+    ```
+1. (In a separate terminal) Initiate *service/oauth2-proxy* port-forward
+    ```
+    kubectl port-forward service/oauth2-proxy -n pacman 4180:4180
+    ```
+## Pac-man
+1. Install via Helm
+    ```
+    helm repo add pacman https://shuguet.github.io/pacman/
+    helm repo update pacman
+    helm install pacman pacman/pacman -n pacman
+    ```
+
+1. Verify installation
+    ```
+    helm status pacman -n pacman
+    watch kubectl get pod -n pacman
+    ```
+
+1. (In a separate terminal) Initiate *service/pacman* port-forward
+    ```
+    kubectl port-forward service/pacman -n pacman 9090:80
+    ```
+1. Open your browser to: http://127.0.0.1:9090/ and attempt to login to your application
+
+1. Patch the Service configuration
+    ```
+    kubectl patch svc pacman -n pacman --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/ports/0/targetPort\", \"value\":4180}]'
+    kubectl patch svc pacman -n pacman --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/selector\", \"value\":{\"k8s-app\": \"oauth2-proxy\"}}]'
+    ```
+
+1. Create Service
+   ```
+   kubectl create -f pacman-actual-service.yaml -n pacman
+   ```
 
 
 
