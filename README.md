@@ -205,12 +205,11 @@ The following steps correspond to the live tutorial walkthrough, which will prov
     kubectl patch svc pacman -n pacman --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/selector\", \"value\":{\"k8s-app\": \"oauth2-proxy\"}}]'
     ```
 
-1. Open your browser again to: http://127.0.0.1:9090/
-
 1. Setup *service/pacman* port-forward again
     ```
     kubectl port-forward service/pacman -n pacman 9090:80
     ```
+1. Open your browser again to: http://127.0.0.1:9090/
 
 1. Create Service
    ```
