@@ -146,7 +146,7 @@ The following steps correspond to the live tutorial walkthrough, which will prov
     kubectl port-forward service/dex -n dex 5556:5556
     ```
 
-1. Add *dex.dex* entry into *hosts* file:
+1. Add *dex.dex* and *oauth2-proxy.pacman* entry into *hosts* file:
 
    * Linux/macOS: `sudo vi /etc/hosts`
    * Windows: `notepad C:\windows\system32\drivers\etc\hosts`
@@ -154,6 +154,7 @@ The following steps correspond to the live tutorial walkthrough, which will prov
     Add the following entry, save, and close:
     ```
     127.0.0.1 dex.dex
+    127.0.0.1 oauth2-proxy.pacman
     ```
 
 ## OAuth2 Proxy
@@ -168,16 +169,6 @@ The following steps correspond to the live tutorial walkthrough, which will prov
 1. (In a separate terminal) Initiate *service/oauth2-proxy* port-forward
     ```
     kubectl port-forward service/oauth2-proxy -n pacman 4180:4180
-    ```
-
-1. Add *oauth2-proxy.pacman* entry into *hosts* file:
-
-   * Linux/macOS: `sudo vi /etc/hosts`
-   * Windows: `notepad C:\windows\system32\drivers\etc\hosts`
-
-    Add the following entry, save, and close:
-    ```
-    127.0.0.1 oauth2-proxy.pacman
     ```
 ## Pac-man
 1. Install via Helm
