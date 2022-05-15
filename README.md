@@ -3,7 +3,7 @@ This tutorial shows how to secure access to the arcade game Pac-Man using Oauth2
 
 # Prerequisites #
 
-In order to complete this tutorial, you will need an environment with the following prerequisites. 
+In order to complete this tutorial, you will need an environment with the following prerequisites.
 
 * [(macOS Only) Homebrew](#homebrew) - Package manager used to install prereqs
 * [(Windows Only) Chocolatey](#chocolatey) - Package manager used to install prereqs
@@ -44,7 +44,7 @@ Alternatively, you can install [Docker Desktop](https://www.docker.com/get-start
 
 * macOS: ```brew install kind```
 * Windows: ```choco install kind```
-* Linux (from [kind.sigs.k8s.io](https://kind.sigs.k8s.io/#installation-and-usage)): 
+* Linux (from [kind.sigs.k8s.io](https://kind.sigs.k8s.io/#installation-and-usage)):
   ```
   curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.13.0/kind-linux-amd64
   chmod +x ./kind
@@ -89,7 +89,7 @@ The following steps correspond to the live tutorial walkthrough, which will prov
 
 1. Create Namespace and Secret​
     ```
-    kubectl create ns openldap​
+    kubectl create ns openlap
     kubectl create secret generic openldap --from-literal=adminpassword=adminpassword --from-literal=users=productionadmin,productionbasic,productionconfig --from-literal=passwords=testpasswordadmin,testpasswordbasic,testpasswordconfig -n openldap
     ```
 
@@ -116,7 +116,7 @@ The following steps correspond to the live tutorial walkthrough, which will prov
 
 1. Verify LDIF Import
     ```
-    ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w adminpassword​
+    ldapsearch -x -H ldap://127.0.0.1:1389 -b dc=example,dc=org -D 'cn=admin,dc=example,dc=org' -w adminpassword
     ```
 
 ## Dex
@@ -129,16 +129,21 @@ The following steps correspond to the live tutorial walkthrough, which will prov
     ```
 
 1. Update `bindPW` in *dex-values.yaml* to match imported admin user
-   
+
 1. Install Dex via Helm
     ```
     kubectl create ns dex​
-    helm install dex dex/dex -n dex -f dex-values.yaml
+    helm install dex dex/dex -n dex -f dex-values.yaml
     ```
 
 1. Verify installation
     ```
     helm status dex -n dex
+    ```
+
+1. (In a separate terminal) Initiate *service/dex* port-forward
+    ```
+    kubectl port-forward service/dex -n dex 5556:5556
     ```
 
 1. Add *dex.dex* entry into *hosts* file:
@@ -151,17 +156,18 @@ The following steps correspond to the live tutorial walkthrough, which will prov
     127.0.0.1 dex.dex
     ```
 
-1. (In a separate terminal) Initiate *service/dex* port-forward
-    ```
-    kubectl port-forward service/dex -n dex 5556:5556
-    ```
-## OAuth2 Proxy 
+## OAuth2 Proxy
 1. Create Deployment and Service
     ```
     cd ../oauth2-proxy
     kubectl create ns pacman
     kubectl create -f oauth2-proxy-deployment.yaml -n pacman
     kubectl create -f oauth2-proxy-service.yaml -n pacman
+    ```
+
+1. (In a separate terminal) Initiate *service/oauth2-proxy* port-forward
+    ```
+    kubectl port-forward service/oauth2-proxy -n pacman 4180:4180
     ```
 
 1. Add *oauth2-proxy.pacman* entry into *hosts* file:
@@ -173,16 +179,12 @@ The following steps correspond to the live tutorial walkthrough, which will prov
     ```
     127.0.0.1 oauth2-proxy.pacman
     ```
-1. (In a separate terminal) Initiate *service/oauth2-proxy* port-forward
-    ```
-    kubectl port-forward service/oauth2-proxy -n pacman 4180:4180
-    ```
 ## Pac-man
 1. Install via Helm
     ```
     helm repo add pacman https://shuguet.github.io/pacman/
     helm repo update pacman
-    helm install pacman pacman/pacman -n pacman
+    helm install pacman pacman/pacman -n pacman
     ```
 
 1. Verify installation
@@ -197,10 +199,17 @@ The following steps correspond to the live tutorial walkthrough, which will prov
     ```
 1. Open your browser to: http://127.0.0.1:9090/ and attempt to login to your application
 
-1. Patch the Service configuration
+1. Patch the Service configuration to change port to 4180 and a different selector
     ```
     kubectl patch svc pacman -n pacman --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/ports/0/targetPort\", \"value\":4180}]'
     kubectl patch svc pacman -n pacman --type='json' -p='[{\"op\": \"replace\", \"path\": \"/spec/selector\", \"value\":{\"k8s-app\": \"oauth2-proxy\"}}]'
+    ```
+
+1. Open your browser again to: http://127.0.0.1:9090/
+
+1. Setup *service/pacman* port-forward again
+    ```
+    kubectl port-forward service/pacman -n pacman 9090:80
     ```
 
 1. Create Service
@@ -208,6 +217,12 @@ The following steps correspond to the live tutorial walkthrough, which will prov
    kubectl create -f pacman-actual-service.yaml -n pacman
    ```
 
+1. Setup *service/pacman* port-forward one last time
+   ```
+   kubectl port-forward service/pacman -n pacman 9090:80
+   ```
+
+1. Open your browser finally to: http://127.0.0.1:9090/
 
 
 
