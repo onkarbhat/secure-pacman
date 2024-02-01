@@ -198,6 +198,7 @@ The following steps correspond to the live tutorial walkthrough, which will prov
 ## Pac-man
 1. Install via Helm
     ```
+    cd ../pacman
     helm repo add pacman https://shuguet.github.io/pacman/
     helm repo update pacman
     helm install pacman pacman/pacman -n pacman
